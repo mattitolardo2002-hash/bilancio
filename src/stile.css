@@ -505,3 +505,15 @@ select.chip { appearance: none; -webkit-appearance: none; padding-right: 13px; c
 .barra-importa .pulsante { width: 100%; }
 /* Nella scelta dell'area per una riga: tutte le aree visibili, senza scorrere di lato. */
 .griglia-aree-piena { grid-auto-flow: row; grid-template-rows: none; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; padding: 0; overflow: visible; }
+
+/* ---------- Macro-aree ---------- */
+.anteprima-area { display: flex; align-items: center; gap: 12px; }
+.anteprima-area input {
+  flex: 1; min-width: 0; font-size: 17px; font-weight: 600; min-height: 48px; padding: 0 14px;
+  border-radius: 12px; border: 1px solid var(--bordo); background: var(--superficie-alta); color: var(--testo);
+}
+.anteprima-area input:focus { outline: none; border-color: rgba(106, 165, 246, 0.5); }
+.anteprima-area .icona-area { border-radius: 16px; }
+.scelta-icone.tutte { grid-template-columns: repeat(8, 1fr); }
+.scelta-icone.tutte button { height: 40px; }
+@media (max-width: 370px) { .scelta-icone.tutte { grid-template-columns: repeat(6, 1fr); } }

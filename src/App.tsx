@@ -11,6 +11,7 @@ import { Home } from './schermate/Home';
 import { Altro } from './schermate/Altro';
 import { Conti } from './schermate/Conti';
 import { Revolut } from './schermate/Revolut';
+import { Aree } from './schermate/Aree';
 import { Movimenti } from './schermate/Movimenti';
 import { Analisi } from './schermate/Analisi';
 
@@ -64,7 +65,7 @@ export function App() {
           {dati && sezione === 'home' && <Home dati={dati} />}
           {dati && sezione === 'movimenti' && <Movimenti dati={dati} />}
           {dati && sezione === 'analisi' && <Analisi dati={dati} />}
-          {dati && sezione === 'altro' && (dettaglio === 'conti' ? <Conti dati={dati} /> : dettaglio === 'revolut' ? <Revolut dati={dati} /> : <Altro esporta={dettaglio === 'esporta'} />)}
+          {dati && sezione === 'altro' && (dettaglio === 'conti' ? <Conti dati={dati} /> : dettaglio === 'revolut' ? <Revolut dati={dati} /> : dettaglio === 'aree' ? <Aree dati={dati} /> : <Altro esporta={dettaglio === 'esporta'} />)}
         </div>
       </main>
       <BarraNavigazione attiva={sezione} onScegli={(id) => vai(id)} onNuovo={() => setFinestra({})} />
