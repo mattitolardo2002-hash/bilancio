@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { IconArrowBackUp, IconBuildingBank, IconChevronRight, IconCloudUpload, IconDownload, IconFileImport, IconInfoCircle, IconLock } from '@tabler/icons-react';
+import { IconArrowBackUp, IconBuildingBank, IconChevronRight, IconCloudUpload, IconDownload, IconFileImport, IconFileSpreadsheet, IconInfoCircle, IconLock } from '@tabler/icons-react';
 import { db, leggiImpostazione } from '../dati/db';
 import { FinestraEsporta, FinestraPassword, ImpostazioneBlocco } from '../componenti/Sicurezza';
 import { decifra, eCifrato, type FileCifrato } from '../dati/cifratura';
@@ -73,6 +73,12 @@ export function Altro({ esporta = false }: { esporta?: boolean }) {
       <button type="button" className="riquadro azione-grande" onClick={() => vai('altro', 'conti')}>
         <span className="azione-icona"><IconBuildingBank size={20} stroke={1.7} /></span>
         <span><strong>Conti e fondi</strong><small>Saldi, valore del PAC e degli altri investimenti</small></span>
+        <IconChevronRight size={18} stroke={1.8} className="testo-tenue" />
+      </button>
+
+      <button type="button" className="riquadro azione-grande" onClick={() => vai('altro', 'revolut')}>
+        <span className="azione-icona"><IconFileSpreadsheet size={20} stroke={1.7} /></span>
+        <span><strong>Importa da Revolut</strong><small>Estratto conto CSV: le spese si registrano da sole</small></span>
         <IconChevronRight size={18} stroke={1.8} className="testo-tenue" />
       </button>
 

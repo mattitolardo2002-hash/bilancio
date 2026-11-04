@@ -489,3 +489,19 @@ select.chip { appearance: none; -webkit-appearance: none; padding-right: 13px; c
 }
 .campo-budget:focus { outline: none; border-color: rgba(106, 165, 246, 0.6); }
 .legenda-nome { overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- Importa da Revolut ---------- */
+.tessera-piccola { display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 14px; background: var(--superficie-alta); }
+.tessera-piccola .etichetta { font-size: 10.5px; }
+.avviso-testo { color: var(--avviso); }
+.riga-spenta { opacity: 0.5; }
+.icona-neutra { color: var(--testo-tenue); background: var(--superficie-alta); }
+.icona-dubbio { color: var(--avviso); background: rgba(233, 180, 76, 0.14); }
+.barra-importa {
+  position: sticky; bottom: calc(env(safe-area-inset-bottom) + var(--altezza-nav)); display: flex; flex-direction: column; gap: 6px;
+  margin: 0 calc(-1 * var(--spazio)); padding: 18px var(--spazio) 10px;
+  background: linear-gradient(180deg, rgba(7, 9, 12, 0), var(--sfondo) 30%);
+}
+.barra-importa .pulsante { width: 100%; }
+/* Nella scelta dell'area per una riga: tutte le aree visibili, senza scorrere di lato. */
+.griglia-aree-piena { grid-auto-flow: row; grid-template-rows: none; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; padding: 0; overflow: visible; }
