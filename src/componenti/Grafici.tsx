@@ -58,6 +58,32 @@ export function LineaAndamento({ valori, etichette }: { valori: number[]; etiche
   );
 }
 
+/** Piccolo grafico senza etichette, da affiancare a un numero (es. il patrimonio). */
+export function MiniLinea({ valori }: { valori: number[] }) {
+  const id = useId();
+  const L = 110, A = 54, m = 5;
+  if (valori.length < 2) valori = [valori[0] ?? 0, valori[0] ?? 0];
+  const min = Math.min(...valori), max = Math.max(...valori);
+  const y = (v: number) => (max === min ? A / 2 : m + (1 - (v - min) / (max - min)) * (A - 2 * m));
+  const passo = (L - m) / (valori.length - 1);
+  const punti = valori.map((v, i) => [i * passo, y(v)] as [number, number]);
+  const linea = curva(punti);
+  const [ux, uy] = punti[punti.length - 1];
+  return (
+    <svg className="mini-linea" viewBox={`0 0 ${L} ${A}`} aria-hidden="true">
+      <defs>
+        <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="var(--accento)" stopOpacity="0.35" />
+          <stop offset="1" stopColor="var(--accento)" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={`${linea} L${ux},${A} L0,${A} Z`} fill={`url(#${id})`} />
+      <path d={linea} fill="none" stroke="var(--accento)" strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round" />
+      <circle cx={ux} cy={uy} r="3.5" fill="var(--accento)" />
+    </svg>
+  );
+}
+
 /** Anello di avanzamento (es. budget usato). Oltre il 100% diventa rosso. */
 export function Anello({ quota, misura = 76, children }: { quota: number; misura?: number; children?: ReactNode }) {
   const r = 30, c = 2 * Math.PI * r;

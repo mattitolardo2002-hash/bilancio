@@ -1,17 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { IconArrowRight, IconBackspace, IconCalendar, IconTrash } from '@tabler/icons-react';
+import { IconArrowRight, IconBackspace, IconCalendar, IconDots, IconTrash } from '@tabler/icons-react';
 import { db, leggiImpostazione, nuovoId, scriviImpostazione } from '../dati/db';
 import type { Movimento, TipoArea } from '../dati/tipi';
 import type { DatiApp } from '../dati/usaDati';
-import { dataLocale, giornoRelativo, leggiImporto } from '../logica/formato';
+import { budgetDi, chiaveMese, meseDi } from '../logica/bilancio';
+import { COLORI_AREA } from './IconaArea';
+import { centesimi, dataLocale, euro, euroTondo, giornoRelativo, leggiImporto } from '../logica/formato';
 import { Finestra, Conferma } from './Finestra';
-import { IconaArea } from './IconaArea';
+import { IconaArea, ICONE_AREA } from './IconaArea';
 
 const TIPI: { id: TipoArea; etichetta: string; verbo: string }[] = [
   { id: 'spesa', etichetta: 'Spesa', verbo: 'Registra spesa' },
   { id: 'entrata', etichetta: 'Entrata', verbo: 'Registra entrata' },
   { id: 'investimento', etichetta: 'Investimento', verbo: 'Registra investimento' },
 ];
+
+/** Importo → cifre del tastierino: 66.4 → "66,40", 50 → "50". */
+const cifreDa = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2).replace('.', ','));
 
 // Finestra per registrare (o modificare) un movimento: importo grande con
 // tastierino, scelta dell'area con le icone, conto e data già pronti.
@@ -34,16 +39,18 @@ export function NuovoMovimento({
   const [data, setData] = useState(dataLocale());
   const [errore, setErrore] = useState('');
   const [eliminare, setEliminare] = useState(false);
+  const [tutteLeAree, setTutteLeAree] = useState(false);
   const dataRef = useRef<HTMLInputElement>(null);
 
   // A ogni apertura: valori del movimento da modificare, oppure quelli dell'ultima volta.
   useEffect(() => {
     if (!aperta || !dati) return;
     setErrore('');
+    setTutteLeAree(false);
     if (movimento) {
       const a = dati.aree.get(movimento.areaId);
       setTipo(a?.tipo ?? 'spesa');
-      setCifre(String(movimento.importo).replace('.', ','));
+      setCifre(cifreDa(movimento.importo));
       setDescrizione(movimento.descrizione);
       setAreaId(movimento.areaId);
       setContoId(movimento.contoId ?? dati.principaleId ?? '');
@@ -71,6 +78,45 @@ export function NuovoMovimento({
       .filter((a) => a.tipo === tipo)
       .sort((x, y) => (uso.get(y.id) ?? 0) - (uso.get(x.id) ?? 0) || x.ordine - y.ordine);
   }, [dati, tipo]);
+
+  // "Rapidi": le spese che ripeti (stessa descrizione e area) negli ultimi 4 mesi.
+  // Un tocco compila area, descrizione, conto e l'importo dell'ultima volta.
+  const rapidi = useMemo(() => {
+    if (!dati || movimento) return [];
+    const da = dataLocale(new Date(Date.now() - 120 * 864e5));
+    const gruppi = new Map<string, { m: Movimento; volte: number }>();
+    for (const m of dati.movimenti) {
+      if (m.data < da || !m.descrizione || dati.aree.get(m.areaId)?.tipo !== tipo) continue;
+      const k = m.descrizione.trim().toLowerCase() + '|' + m.areaId;
+      const g = gruppi.get(k);
+      if (!g) gruppi.set(k, { m, volte: 1 });
+      else {
+        g.volte++;
+        if (m.data > g.m.data || (m.data === g.m.data && m.creato > g.m.creato)) g.m = m;
+      }
+    }
+    return [...gruppi.values()]
+      .sort((x, y) => y.volte - x.volte || y.m.data.localeCompare(x.m.data))
+      .slice(0, 6)
+      .map((g) => g.m);
+  }, [dati, tipo, movimento]);
+
+  const usaRapido = (m: Movimento) => {
+    setAreaId(m.areaId);
+    setDescrizione(m.descrizione);
+    setCifre(cifreDa(m.importo));
+    if (m.contoId && dati?.conti.some((c) => c.id === m.contoId)) setContoId(m.contoId);
+    setErrore('');
+  };
+
+  // Griglia: le 7 aree più usate + "Altre". L'area scelta resta sempre visibile.
+  const MAX = 7;
+  let areeVisibili = aree;
+  if (!tutteLeAree && aree.length > MAX + 1) {
+    areeVisibili = aree.slice(0, MAX);
+    const scelta = aree.find((a) => a.id === areaId);
+    if (scelta && !areeVisibili.includes(scelta)) areeVisibili = [...areeVisibili.slice(0, MAX - 1), scelta];
+  }
 
   const contiLiquidi = dati?.conti.filter((c) => c.tipo === 'liquidita') ?? [];
   const area = areaId ? dati?.aree.get(areaId) : undefined;
@@ -132,8 +178,27 @@ export function NuovoMovimento({
     onChiudi();
   };
 
+  // Quanto resta nell'area scelta nel mese della data, tenendo conto dell'importo scritto.
+  const infoBudget = (() => {
+    if (!dati || !area || area.tipo !== 'spesa') return null;
+    const { anno, mese } = meseDi(data);
+    const budget = budgetDi(dati.budget.filter((b) => b.anno === anno), area.id, mese);
+    if (budget <= 0) return null;
+    const prefisso = chiaveMese(anno, mese);
+    const speso = dati.movimenti
+      .filter((m) => m.areaId === area.id && m.data.startsWith(prefisso) && m.id !== movimento?.id)
+      .reduce((t, m) => t + m.importo, 0);
+    const questo = leggiImporto(cifre) ?? 0;
+    return { budget, speso: centesimi(speso), resta: centesimi(budget - speso - questo), conQuesto: questo > 0 };
+  })();
+
   const [intero, decimali] = (cifre || '0').split(',');
-  const verbo = movimento ? 'Salva modifiche' : TIPI.find((t) => t.id === tipo)!.verbo;
+  const importoScritto = leggiImporto(cifre);
+  const verbo = movimento
+    ? 'Salva modifiche'
+    : importoScritto && importoScritto > 0
+      ? `Registra ${euro(importoScritto)}`
+      : TIPI.find((t) => t.id === tipo)!.verbo;
 
   return (
     <>
@@ -173,8 +238,24 @@ export function NuovoMovimento({
           />
         </div>
 
-        <div className="griglia-aree" role="radiogroup" aria-label="Area">
-          {aree.map((a) => (
+        {rapidi.length > 0 && (
+          <div className="rapidi" aria-label="Spese che ripeti">
+            {rapidi.map((m) => {
+              const a = dati?.aree.get(m.areaId);
+              const Ic = a ? ICONE_AREA[a.icona] ?? IconDots : IconDots;
+              const scelto = m.areaId === areaId && m.descrizione.trim().toLowerCase() === descrizione.trim().toLowerCase();
+              return (
+                <button key={m.id} type="button" className="chip" aria-checked={scelto} onClick={() => usaRapido(m)}>
+                  <Ic size={16} stroke={1.8} style={{ color: (a && COLORI_AREA[a.colore]) ?? COLORI_AREA.grigio }} />
+                  {m.descrizione}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="griglia-aree griglia-aree-piena" role="radiogroup" aria-label="Area">
+          {areeVisibili.map((a) => (
             <button
               key={a.id}
               type="button"
@@ -190,7 +271,38 @@ export function NuovoMovimento({
               <span>{a.nome}</span>
             </button>
           ))}
+          {areeVisibili.length < aree.length && (
+            <button type="button" className="scelta-area" onClick={() => setTutteLeAree(true)}>
+              <IconaArea area={{ icona: 'puntini', colore: 'grigio' }} misura={36} />
+              <span>Altre ({aree.length - areeVisibili.length})</span>
+            </button>
+          )}
         </div>
+
+        {infoBudget && (
+          <div className="info-budget">
+            <div className="info-budget-riga">
+              <span className="info-budget-nome">{area?.nome}</span>
+              {infoBudget.resta >= 0 ? (
+                <span>
+                  {infoBudget.conQuesto ? 'dopo questa restano' : 'restano'} <strong>{euro(infoBudget.resta)}</strong> di {euroTondo(infoBudget.budget)}
+                </span>
+              ) : (
+                <span className="negativo">
+                  {infoBudget.conQuesto ? 'superi il budget di' : 'oltre il budget di'} <strong>{euro(-infoBudget.resta)}</strong>
+                </span>
+              )}
+            </div>
+            <div className="progresso">
+              <span
+                style={{
+                  width: `${Math.min(100, ((infoBudget.budget - infoBudget.resta) / infoBudget.budget) * 100)}%`,
+                  background: infoBudget.resta < 0 ? 'var(--negativo)' : 'var(--accento)',
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         <div className="riga-dettagli">
           {contiLiquidi.length > 0 && (

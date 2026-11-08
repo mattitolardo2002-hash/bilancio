@@ -17,6 +17,12 @@ export interface Area {
   ordine: number;
   /** Solo per gli investimenti: il fondo (conto d'investimento) che questa area fa crescere. */
   fondoId?: string;
+  /**
+   * Solo per le spese: spesa fissa (affitto, abbonamenti…), di solito pagata
+   * a inizio mese. Non conta nel "ritmo" delle spese di tutti i giorni.
+   * Se manca vale il valore predefinito (vedi eFissa in logica/bilancio.ts).
+   */
+  fissa?: boolean;
 }
 
 /** Un movimento registrato. L'importo è sempre positivo: il tipo lo dà l'area. */

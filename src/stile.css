@@ -517,3 +517,78 @@ select.chip { appearance: none; -webkit-appearance: none; padding-right: 13px; c
 .scelta-icone.tutte { grid-template-columns: repeat(8, 1fr); }
 .scelta-icone.tutte button { height: 40px; }
 @media (max-width: 370px) { .scelta-icone.tutte { grid-template-columns: repeat(6, 1fr); } }
+
+/* ---------- Interruttore (spesa fissa) ---------- */
+.riga-interruttore > span { display: flex; flex-direction: column; gap: 2px; }
+.riga-interruttore small { font-size: 12px; color: var(--testo-spento); line-height: 1.35; }
+.interruttore {
+  appearance: none; -webkit-appearance: none; flex: none; position: relative;
+  width: 50px; height: 30px; border-radius: 999px; margin: 0;
+  background: var(--superficie-alta); border: 1px solid var(--bordo); cursor: pointer; transition: background 0.2s;
+}
+.interruttore::after {
+  content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%;
+  background: #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4); transition: transform 0.2s;
+}
+.interruttore:checked { background: var(--accento); border-color: transparent; }
+.interruttore:checked::after { transform: translateX(20px); }
+
+/* ---------- Home: mese, "puoi ancora spendere", patrimonio ---------- */
+.pillola-mese {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 12px 0 14px;
+  border-radius: 999px; border: 1px solid var(--bordo); background: var(--superficie);
+  font-size: 14px; font-weight: 600; color: var(--testo);
+}
+.pillola-mese:active { background: var(--superficie-alta); }
+.griglia-mesi { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 6px; }
+.griglia-mesi .chip { justify-content: center; text-transform: capitalize; color: var(--testo); }
+.griglia-mesi .chip:disabled { opacity: 0.3; }
+
+.riquadro-eroe .importo-grande { margin: 8px 0 4px; }
+.barra-ritmo { position: relative; display: flex; height: 10px; margin: 16px 0 10px; border-radius: 99px; background: var(--traccia); }
+.barra-ritmo span { height: 100%; transition: width 0.5s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.barra-ritmo span:first-child { border-radius: 99px 0 0 99px; }
+.barra-ritmo span:nth-child(2) { border-radius: 0 99px 99px 0; }
+.barra-ritmo .fisse, .legenda-ritmo i.fisse { background: rgba(141, 150, 165, 0.55); }
+.barra-ritmo .libere, .legenda-ritmo i.libere { background: var(--accento); }
+.barra-ritmo .oltre { background: var(--negativo); }
+.tacca-oggi { position: absolute; top: -5px; width: 2px; height: 20px; margin-left: -1px; border-radius: 2px; background: var(--testo); }
+.tacca-oggi::after { content: 'oggi'; position: absolute; top: 21px; left: 50%; transform: translateX(-50%); font-size: 10px; font-style: normal; color: var(--testo-tenue); }
+.legenda-ritmo { display: flex; align-items: center; gap: 12px; margin-top: 14px; font-size: 12px; color: var(--testo-tenue); white-space: nowrap; }
+.legenda-ritmo i { display: inline-block; width: 8px; height: 8px; border-radius: 3px; margin-right: 5px; }
+.legenda-ritmo .spinta { flex: 1; }
+.tre-totali { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--bordo); }
+.tre-totali > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.tre-totali > div + div { padding-left: 12px; border-left: 1px solid var(--bordo); }
+.tre-totali .etichetta { font-size: 10.5px; }
+.tre-totali .importo-medio { font-size: 22px; white-space: nowrap; }
+
+.patrimonio { display: flex; align-items: center; gap: 12px; }
+.patrimonio-testo { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.importo-patrimonio { font-family: var(--numeri); font-weight: 600; font-size: 32px; line-height: 1.05; }
+.mini-linea { flex: none; width: 110px; height: 54px; overflow: visible; }
+.conti-in-fila { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 14px -18px 0; padding: 0 18px; scroll-padding: 0 18px; }
+.conti-in-fila::-webkit-scrollbar { display: none; }
+.scheda-conto {
+  flex: none; min-width: 124px; display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  padding: 10px 12px; border-radius: 14px; border: 1px solid var(--bordo); background: var(--superficie-alta); text-align: left;
+}
+.scheda-conto-nome { font-size: 12px; color: var(--testo-tenue); white-space: nowrap; }
+.scheda-conto .numero { font-size: 19px; }
+.scheda-conto-sotto { font-size: 11.5px; font-weight: 600; }
+.elenco-aree-sotto strong { font-family: var(--numeri); font-weight: 600; font-size: 14px; }
+
+/* ---------- Nuovo movimento: rapidi, descrizione leggera, budget dell'area ---------- */
+/* La descrizione è una riga leggera sotto l'importo, non un campo pesante. */
+.campo-descrizione { border-color: transparent; background: none; color: var(--testo-tenue); padding: 4px 14px; }
+.campo-descrizione:focus { background: var(--superficie-alta); color: var(--testo); }
+.importo-inserito .importo-grande { margin-bottom: 2px; }
+.rapidi { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -18px; padding: 0 18px; scroll-padding: 0 18px; }
+.rapidi::-webkit-scrollbar { display: none; }
+.rapidi .chip { color: var(--testo); }
+.info-budget { padding: 9px 12px 10px; border-radius: 14px; border: 1px solid var(--bordo); background: var(--sfondo); font-size: 12.5px; color: var(--testo-tenue); }
+.info-budget-riga { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 7px; }
+.info-budget-nome { color: var(--testo); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.info-budget-riga > span:last-child { white-space: nowrap; }
+.info-budget strong { color: var(--testo); font-family: var(--numeri); font-weight: 600; font-size: 14px; }
+.info-budget .negativo strong { color: var(--negativo); }

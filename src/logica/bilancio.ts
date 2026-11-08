@@ -80,5 +80,62 @@ export function patrimonioPerMese(
 /** Quanto pesa ogni tipo sul segno del saldo: entrate in più, spese e investimenti in meno. */
 export const SEGNO: Record<TipoArea, 1 | -1> = { entrata: 1, spesa: -1, investimento: -1 };
 
+/** Aree di partenza considerate spese fisse finché non si sceglie diversamente. */
+const FISSE_PREDEFINITE = new Set(['a_casa', 'a_abb']);
+
+/** Vero se l'area è una spesa fissa (affitto, bollette, abbonamenti). */
+export function eFissa(a: Area): boolean {
+  return a.tipo === 'spesa' && (a.fissa ?? FISSE_PREDEFINITE.has(a.id));
+}
+
+export interface RitmoMese {
+  /** Budget di spesa del mese (tutte le aree). */
+  budget: number;
+  /** Parte del budget per le spese fisse. */
+  budgetFisse: number;
+  spesoFisse: number;
+  spesoLibere: number;
+  /** Quanto resta del budget (negativo se superato). */
+  resta: number;
+  /** Quanto si poteva aver speso fino a oggi andando a passo costante (fisse comprese). */
+  atteso: number;
+  /** Fisse previste ma non ancora pagate: vanno tenute da parte. */
+  fisseDaPagare: number;
+}
+
+/**
+ * Ritmo delle spese del mese. Le spese fisse si pagano tutte in una volta,
+ * quindi contano per intero da subito; solo le altre si distribuiscono sui giorni.
+ * `giorniPassati` comprende oggi (il 1° del mese vale 1).
+ */
+export function ritmoMese(
+  movimentiMese: Movimento[], aree: Map<string, Area>, budget: Budget[], mese: number, giorniPassati: number, giorni: number,
+): RitmoMese {
+  let spesoFisse = 0, spesoLibere = 0, budgetTot = 0, budgetFisse = 0;
+  for (const m of movimentiMese) {
+    const a = aree.get(m.areaId);
+    if (!a || a.tipo !== 'spesa') continue;
+    if (eFissa(a)) spesoFisse += m.importo;
+    else spesoLibere += m.importo;
+  }
+  for (const b of budget) {
+    const a = aree.get(b.areaId);
+    if (!a || a.tipo !== 'spesa') continue;
+    const v = b.mesi[mese] ?? 0;
+    budgetTot += v;
+    if (eFissa(a)) budgetFisse += v;
+  }
+  const atteso = budgetFisse + ((budgetTot - budgetFisse) * Math.min(giorniPassati, giorni)) / giorni;
+  return {
+    budget: centesimi(budgetTot),
+    budgetFisse: centesimi(budgetFisse),
+    spesoFisse: centesimi(spesoFisse),
+    spesoLibere: centesimi(spesoLibere),
+    resta: centesimi(budgetTot - spesoFisse - spesoLibere),
+    atteso: centesimi(atteso),
+    fisseDaPagare: centesimi(Math.max(0, budgetFisse - spesoFisse)),
+  };
+}
+
 /** Giorni in un mese. */
 export const giorniNelMese = (anno: number, mese: number) => new Date(anno, mese + 1, 0).getDate();

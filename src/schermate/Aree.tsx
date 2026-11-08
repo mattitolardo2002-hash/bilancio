@@ -3,6 +3,7 @@ import { IconArrowDown, IconArrowUp, IconChevronLeft, IconChevronRight, IconPlus
 import { db, nuovoId } from '../dati/db';
 import type { Area, TipoArea } from '../dati/tipi';
 import type { DatiApp } from '../dati/usaDati';
+import { eFissa } from '../logica/bilancio';
 import { Finestra } from '../componenti/Finestra';
 import { COLORI_AREA, ICONE_AREA, IconaArea } from '../componenti/IconaArea';
 import { vai } from '../navigazione';
@@ -37,6 +38,7 @@ export function Aree({ dati }: { dati: DatiApp }) {
                 <span className="riga-movimento-testo">
                   <span className="riga-movimento-titolo">{a.nome}</span>
                   <span className="riga-movimento-sotto">
+                    {eFissa(a) ? 'Fissa · ' : ''}
                     {conteggio.get(a.id) ?? 0} {conteggio.get(a.id) === 1 ? 'movimento' : 'movimenti'}
                     {a.tipo === 'investimento' && a.fondoId ? ` · va in ${dati.conti.find((c) => c.id === a.fondoId)?.nome ?? '—'}` : ''}
                   </span>
@@ -72,6 +74,7 @@ function ModificaArea({
   const [icona, setIcona] = useState(area?.icona ?? 'puntini');
   const [colore, setColore] = useState(area?.colore ?? 'blu');
   const [fondoId, setFondoId] = useState(area?.fondoId ?? '');
+  const [fissa, setFissa] = useState(area ? eFissa(area) : false);
   const [errore, setErrore] = useState('');
   const [elimina, setElimina] = useState(false);
   const [destinazione, setDestinazione] = useState('');
@@ -93,6 +96,7 @@ function ModificaArea({
       budgetStandard: area?.budgetStandard ?? 0,
       ordine: area?.ordine ?? Math.max(0, ...dati.elencoAree.map((a) => a.ordine)) + 1,
       fondoId: tipo === 'investimento' ? fondoId || undefined : undefined,
+      fissa: tipo === 'spesa' ? fissa : undefined,
     });
     onChiudi();
   };
@@ -173,6 +177,15 @@ function ModificaArea({
           <button key={k} type="button" role="radio" aria-checked={colore === k} aria-label={k} onClick={() => setColore(k)} style={{ background: v }} />
         ))}
       </div>
+      {tipo === 'spesa' && (
+        <label className="riga-scelta riga-interruttore">
+          <span>
+            Spesa fissa
+            <small>Affitto, bollette, abbonamenti: pagate una volta al mese, non contano nel ritmo di tutti i giorni.</small>
+          </span>
+          <input type="checkbox" className="interruttore" checked={fissa} onChange={(e) => setFissa(e.target.checked)} />
+        </label>
+      )}
       {tipo === 'investimento' && (
         <label className="riga-scelta">
           <span>I soldi vanno in</span>
